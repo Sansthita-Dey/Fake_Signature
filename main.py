@@ -24,7 +24,7 @@ app.add_middleware(
 # =========================
 # Load Trained Model
 # =========================
-model = tf.keras.models.load_model("signature_model_transfer.keras")
+model = tf.keras.models.load_model("models/bengali_signature_model.keras")
 
 IMG_SIZE = 224
 
