@@ -4,6 +4,7 @@ import random
 import os
 from tensorflow.keras.preprocessing.image import ImageDataGenerator
 from tensorflow.keras import layers, models
+from tensorflow.keras.callbacks import ModelCheckpoint, EarlyStopping
 
 # =========================
 # 1️⃣ Set Seed for Reproducibility
@@ -15,7 +16,6 @@ np.random.seed(SEED)
 tf.random.set_seed(SEED)
 os.environ['PYTHONHASHSEED'] = str(SEED)
 
-# Optional: Force deterministic behavior
 tf.config.experimental.enable_op_determinism()
 
 # =========================
@@ -26,6 +26,9 @@ BATCH_SIZE = 32
 EPOCHS = 15
 
 train_dir = "datasets/hindi/train"
+
+# Create models folder if not exists
+os.makedirs("models", exist_ok=True)
 
 # =========================
 # 3️⃣ Data Generator
@@ -51,7 +54,7 @@ val_generator = train_datagen.flow_from_directory(
     batch_size=BATCH_SIZE,
     class_mode='binary',
     subset='validation',
-    shuffle=True,
+    shuffle=False,
     seed=SEED
 )
 
@@ -84,17 +87,37 @@ model.compile(
 )
 
 # =========================
-# 6️⃣ Train Model
+# 6️⃣ Callbacks (IMPORTANT)
+# =========================
+checkpoint = ModelCheckpoint(
+    "models/hindi_best_model.keras",
+    monitor="val_accuracy",
+    save_best_only=True,
+    mode="max",
+    verbose=1
+)
+
+early_stop = EarlyStopping(
+    monitor="val_loss",
+    patience=5,
+    restore_best_weights=True,
+    verbose=1
+)
+
+# =========================
+# 7️⃣ Train Model
 # =========================
 history = model.fit(
     train_generator,
     validation_data=val_generator,
-    epochs=EPOCHS
+    epochs=EPOCHS,
+    callbacks=[checkpoint, early_stop]
 )
 
 # =========================
-# 7️⃣ Save Model
+# 8️⃣ Save Final Model (Optional Backup)
 # =========================
-model.save("models/hindi_signature_model.keras")
+model.save("models/hindi_final_model.keras")
 
-print("✅ Hindi model training complete and saved successfully.")
+print("✅ Hindi model training complete.")
+print("🏆 Best model saved as: models/hindi_best_model.keras")
